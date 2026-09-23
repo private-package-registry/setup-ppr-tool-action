@@ -59,7 +59,7 @@ function releaseBase(version) {
   let tag = "latest";
   if (requested !== "latest") {
     const match = /^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/.exec(requested);
-    if (!match) throw new Error(`Invalid ppr-tool version "${requested}": use latest or a release tag such as v0.1.0`);
+    if (!match) throw new Error(`Invalid ppr-tool version "${requested}": use latest or a release tag such as v0.0.1`);
     tag = `v${match[1]}`;
   }
   if (override) {
@@ -73,7 +73,7 @@ async function download(url) {
   let lastError;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(6e4), headers: { "user-agent": `setup-ppr-tool-action/${"0.2.0"}` } });
+      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(6e4), headers: { "user-agent": `setup-ppr-tool-action/${"0.0.0"}` } });
       if (response.status >= 500) throw new Error(`HTTP ${response.status}`);
       if (!response.ok) throw Object.assign(new Error(`Download of ${url} failed with HTTP ${response.status}`), { fatal: true });
       return { body: Buffer.from(await response.arrayBuffer()), finalUrl: response.url };

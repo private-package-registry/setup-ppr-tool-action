@@ -20,7 +20,7 @@ steps:
   - uses: private-package-registry/setup-ppr-tool-action@v0
     with:
       registry: ${{ vars.PPR_REGISTRY }}
-      version: v0.2.0   # optional; defaults to latest
+      version: v0.0.1   # optional; defaults to latest
   - run: ppr-tool stage --product licensing-kit --variant sources artifacts/npm/*.tgz artifacts/nuget/*.nupkg
   - run: ppr-tool verify -- node tools/test-install.mjs
   - run: ppr-tool commit
@@ -33,7 +33,7 @@ and `preview-url` step outputs and a package table to the job summary.
 | Input | Required | Description |
 |---|---|---|
 | `registry` | yes | HTTPS origin of the private package registry, without path, query or credentials |
-| `version` | no | `ppr-tool` release tag (`v0.2.0`) or `latest` (default) |
+| `version` | no | `ppr-tool` release tag (`v0.0.1`) or `latest` (default) |
 
 Pin `version` to a release tag for reproducible builds; `latest` is convenient for development.
 Pin this Action to a release tag or full commit SHA as usual. The Action itself runs on the

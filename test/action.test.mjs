@@ -25,9 +25,9 @@ async function releases(t, { tamper = false } = {}) {
   const requests = [];
   const server = createServer((req, res) => {
     requests.push(req.url);
-    if (req.url === '/latest/SHA256SUMS' || req.url === '/v0.2.0/SHA256SUMS') { res.end(`${sha256('other')}  ppr-tool-other\n${tamper ? 'a'.repeat(64) : sha256(binary)}  ${asset}\n`); return; }
-    if (req.url === `/latest/${asset}`) { res.writeHead(302, { location: `/v0.2.0/${asset}` }); res.end(); return; }
-    if (req.url === `/v0.2.0/${asset}`) { res.end(binary); return; }
+    if (req.url === '/latest/SHA256SUMS' || req.url === '/v0.0.1/SHA256SUMS') { res.end(`${sha256('other')}  ppr-tool-other\n${tamper ? 'a'.repeat(64) : sha256(binary)}  ${asset}\n`); return; }
+    if (req.url === `/latest/${asset}`) { res.writeHead(302, { location: `/v0.0.1/${asset}` }); res.end(); return; }
+    if (req.url === `/v0.0.1/${asset}`) { res.end(binary); return; }
     res.writeHead(404); res.end();
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -63,7 +63,7 @@ test('installs the released binary, verifies its checksum and exposes ppr-tool o
   const { dir, envFile, pathFile, code, output } = await run(t, { PPR_TOOL_RELEASES_URL: url });
   assert.equal(code, 0, output);
   assert.deepEqual(requests.slice(0, 2), ['/latest/SHA256SUMS', `/latest/${asset}`]);
-  assert.match(output, new RegExp(`ppr-tool v0\\.2\\.0 \\(${asset.replaceAll('.', '\\.')}\\) ready`));
+  assert.match(output, new RegExp(`ppr-tool v0\\.0\\.1 \\(${asset.replaceAll('.', '\\.')}\\) ready`));
   assert.match(await readFile(envFile, 'utf8'), /^PPR_REGISTRY=https:\/\/registry\.example\.test$/m);
   assert.match(await readFile(envFile, 'utf8'), /^PPR_STATE=.*ppr-tool-state.*state\.json$/m);
   assert.match(await readFile(pathFile, 'utf8'), /ppr-tool-bin/);
@@ -77,9 +77,9 @@ test('installs the released binary, verifies its checksum and exposes ppr-tool o
 
 test('pins an explicit version', async t => {
   const { url, requests } = await releases(t);
-  const { code, output } = await run(t, { PPR_TOOL_RELEASES_URL: url, INPUT_VERSION: '0.2.0' });
+  const { code, output } = await run(t, { PPR_TOOL_RELEASES_URL: url, INPUT_VERSION: '0.0.1' });
   assert.equal(code, 0, output);
-  assert.deepEqual(requests, ['/v0.2.0/SHA256SUMS', `/v0.2.0/${asset}`]);
+  assert.deepEqual(requests, ['/v0.0.1/SHA256SUMS', `/v0.0.1/${asset}`]);
 });
 
 test('rejects a binary whose checksum does not match and leaves nothing on PATH', async t => {

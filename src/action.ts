@@ -21,7 +21,7 @@ function releaseBase(version: string): string {
   let tag = 'latest';
   if (requested !== 'latest') {
     const match = /^v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/.exec(requested);
-    if (!match) throw new Error(`Invalid ppr-tool version "${requested}": use latest or a release tag such as v0.1.0`);
+    if (!match) throw new Error(`Invalid ppr-tool version "${requested}": use latest or a release tag such as v0.0.1`);
     tag = `v${match[1]}`;
   }
   if (override) {

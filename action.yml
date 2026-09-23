@@ -5,7 +5,7 @@ inputs:
     description: HTTPS origin of the private package registry
     required: true
   version:
-    description: ppr-tool release to install, as a tag (v0.2.0) or "latest"
+    description: ppr-tool release to install, as a tag (v0.0.1) or "latest"
     required: false
     default: latest
 runs:
