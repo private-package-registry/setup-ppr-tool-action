@@ -17,7 +17,7 @@ permissions:
 steps:
   - uses: actions/checkout@v6
   # Native build and archive preparation goes here.
-  - uses: private-package-registry/setup-ppr-tool-action@v1
+  - uses: private-package-registry/setup-ppr-tool-action@v0
     with:
       registry: ${{ vars.PPR_REGISTRY }}
       version: v0.2.0   # optional; defaults to latest
