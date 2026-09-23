@@ -1,6 +1,6 @@
 {
   "name": "setup-ppr-tool-action",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "GitHub Action that installs ppr-tool from its GitHub release and configures the private package registry publisher.",
   "license": "MIT",
   "repository": {

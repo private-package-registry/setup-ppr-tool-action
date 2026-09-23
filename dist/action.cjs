@@ -73,7 +73,7 @@ async function download(url) {
   let lastError;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(6e4), headers: { "user-agent": `setup-ppr-tool-action/${"0.0.0"}` } });
+      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(6e4), headers: { "user-agent": `setup-ppr-tool-action/${"0.0.1"}` } });
       if (response.status >= 500) throw new Error(`HTTP ${response.status}`);
       if (!response.ok) throw Object.assign(new Error(`Download of ${url} failed with HTTP ${response.status}`), { fatal: true });
       return { body: Buffer.from(await response.arrayBuffer()), finalUrl: response.url };
