@@ -1,11 +1,11 @@
 name: Setup ppr-tool
-description: Install ppr-tool from its GitHub release and configure the private package registry publisher; authentication happens lazily with GitHub OIDC or PPR_TOKEN.
+description: Install the native ppr-tool binary from its GitHub release and configure the private package registry publisher; authentication happens lazily with GitHub OIDC or PPR_TOKEN.
 inputs:
   registry:
     description: HTTPS origin of the private package registry
     required: true
   version:
-    description: ppr-tool release to install, as a tag (v0.1.0) or "latest"
+    description: ppr-tool release to install, as a tag (v0.2.0) or "latest"
     required: false
     default: latest
 runs:

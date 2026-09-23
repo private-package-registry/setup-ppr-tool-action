@@ -26,8 +26,26 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var import_promises = require("node:fs/promises");
 var import_node_crypto = require("node:crypto");
 var import_node_path = __toESM(require("node:path"), 1);
+
+// src/platform.ts
+var ASSETS = {
+  "linux/x64": "ppr-tool-x86_64-unknown-linux-musl",
+  "linux/arm64": "ppr-tool-aarch64-unknown-linux-musl",
+  "darwin/x64": "ppr-tool-x86_64-apple-darwin",
+  "darwin/arm64": "ppr-tool-aarch64-apple-darwin",
+  "win32/x64": "ppr-tool-x86_64-pc-windows-msvc.exe"
+};
+function assetName(platform = process.platform, arch = process.arch) {
+  const asset = ASSETS[`${platform}/${arch}`];
+  if (!asset) throw new Error(`Unsupported runner platform ${platform}/${arch}: ppr-tool is released for ${Object.keys(ASSETS).join(", ")}`);
+  return asset;
+}
+function binaryName(platform = process.platform) {
+  return platform === "win32" ? "ppr-tool.exe" : "ppr-tool";
+}
+
+// src/action.ts
 var RELEASES = "https://github.com/private-package-registry/ppr-tool/releases";
-var BUNDLE = "ppr-tool.mjs";
 var SUMS = "SHA256SUMS";
 function registryUrl(value) {
   const url = new URL(value);
@@ -55,7 +73,7 @@ async function download(url) {
   let lastError;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(6e4), headers: { "user-agent": `setup-ppr-tool-action/${"0.1.0"}` } });
+      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(6e4), headers: { "user-agent": `setup-ppr-tool-action/${"0.2.0"}` } });
       if (response.status >= 500) throw new Error(`HTTP ${response.status}`);
       if (!response.ok) throw Object.assign(new Error(`Download of ${url} failed with HTTP ${response.status}`), { fatal: true });
       return { body: Buffer.from(await response.arrayBuffer()), finalUrl: response.url };
@@ -67,43 +85,36 @@ async function download(url) {
   }
   throw new Error(`Download of ${url} failed: ${lastError instanceof Error ? lastError.message : "network error"}`);
 }
-function expectedDigest(sums) {
+function expectedDigest(sums, asset) {
   for (const line of sums.split(/\r?\n/)) {
     const match = /^([a-f0-9]{64})\s+\*?(\S+)$/.exec(line.trim());
-    if (match && match[2] === BUNDLE) return match[1];
+    if (match && match[2] === asset) return match[1];
   }
-  throw new Error(`${SUMS} has no entry for ${BUNDLE}`);
+  throw new Error(`${SUMS} has no entry for ${asset}`);
 }
 async function main() {
   const registry = registryUrl(process.env.INPUT_REGISTRY || "");
   const temp = process.env.RUNNER_TEMP;
   if (!temp || !process.env.GITHUB_PATH || !process.env.GITHUB_ENV) throw new Error("GitHub Actions runner environment is required");
+  const asset = assetName();
   const base = releaseBase(process.env.INPUT_VERSION || "latest");
   const sums = await download(base + SUMS);
-  const digest = expectedDigest(sums.body.toString("utf8"));
-  const bundle = await download(base + BUNDLE);
-  const actual = (0, import_node_crypto.createHash)("sha256").update(bundle.body).digest("hex");
+  const digest = expectedDigest(sums.body.toString("utf8"), asset);
+  const binary = await download(base + asset);
+  const actual = (0, import_node_crypto.createHash)("sha256").update(binary.body).digest("hex");
   if (actual !== digest) throw new Error(`ppr-tool download does not match ${SUMS} (expected ${digest}, got ${actual})`);
-  const resolved = /\/(v\d[^/]*)\/[^/]*$/.exec(bundle.finalUrl)?.[1] ?? "latest";
+  const resolved = /\/(v\d[^/]*)\/[^/]*$/.exec(binary.finalUrl)?.[1] ?? "latest";
   const directory = import_node_path.default.join(temp, "ppr-tool-bin");
+  const file = import_node_path.default.join(directory, binaryName());
   await (0, import_promises.rm)(directory, { recursive: true, force: true });
   await (0, import_promises.mkdir)(directory, { recursive: true });
-  await (0, import_promises.writeFile)(import_node_path.default.join(directory, BUNDLE), bundle.body, { mode: 493 });
-  if (process.platform === "win32") {
-    await (0, import_promises.writeFile)(import_node_path.default.join(directory, "ppr-tool.cmd"), `@"${process.execPath}" "%~dp0${BUNDLE}" %*\r
-`);
-  } else {
-    const nodePath = process.execPath.replaceAll("'", "'\\''");
-    await (0, import_promises.writeFile)(import_node_path.default.join(directory, "ppr-tool"), `#!/bin/sh
-exec '${nodePath}' "$(dirname "$0")/${BUNDLE}" "$@"
-`, { mode: 493 });
-    await (0, import_promises.chmod)(import_node_path.default.join(directory, "ppr-tool"), 493);
-  }
+  await (0, import_promises.writeFile)(file, binary.body, { mode: 493 });
+  await (0, import_promises.chmod)(file, 493);
   await (0, import_promises.appendFile)(process.env.GITHUB_PATH, directory + "\n");
   await (0, import_promises.appendFile)(process.env.GITHUB_ENV, `PPR_REGISTRY=${registry}
 PPR_STATE=${import_node_path.default.join(temp, "ppr-tool-state", "state.json")}
 `);
-  console.log(`ppr-tool ${resolved} ready (sha256 ${actual}). OIDC will be requested when staging.`);
+  console.log(`ppr-tool ${resolved} (${asset}) ready (sha256 ${actual}). OIDC will be requested when staging.`);
 }
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : "Setup failed");
